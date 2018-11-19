@@ -88,8 +88,11 @@ long readIndex(char *Filename, Node* root)
 //Driver for Word on Dictionary
 void addWord(char *idFile, char *dicFile, Node *root, char word[50])
 {
-    if (findNode(root, word) != -1)     // if word in Tree, return
-        return;
+    if (findNode(root, word) >= 0 )     // if word in Tree, return
+        {
+            cout<<"The word : "<<word<<" : has been in dictionary"<<endl;
+            return;
+        }
 
     addNode(root, word, cur_offset);    // addNode word, cur_offset to Tree
 
@@ -102,12 +105,12 @@ void addWord(char *idFile, char *dicFile, Node *root, char word[50])
     fclose(f);
 
      //Add word and explain text to Dictionary file
-    FILE *fdic = fopen(dicFile, "r+");
+    FILE *fdic = fopen(dicFile, "ab");
     text S;
     cout<<"Explain text for "<<word<<" : \n";
     fflush(stdin);
     gets(S);
-    fseek(fdic, cur_offset, 0);
+    //fseek(fdic, cur_offset, 0);
     fwrite(&S, sizeof(S), 1, fdic);
     //cout<<endl<<cur_offset<<endl<<S<<endl;
     fclose(fdic);
@@ -131,7 +134,7 @@ void editExplain (char *dicFile, long offset)
 void findWord(char *dicFile, Node *root, char word[50])
 {
     long offset = findNode(root, word);
-    if (offset == -1)
+    if (offset < 0)
     {
         cout<<"The Word : "<<word<<" : not Found"<<endl;
         return;
@@ -161,41 +164,50 @@ void delWord(char *Filename, char key[50],Node* root)
         p = p->child[id];
     }
     if (!p) {cout<<"Not Found"<<endl; return;}
-    p->offset = -1;
+
+    if (p->offset < 0) {cout<<"Not Found"<<endl; return;}
+
+    if (p->offset == 0)
+        p->offset = -1;
+    else
+        p->offset = (p->offset)*(-1);
 }
 
 int main()
 {
     char *Filename ="Index.bin";
     char *Dictionary = "Dict.bin";
-    //writeIndex(Filename);
 
+    // Constructer for building files
+    /*writeIndex(Filename);
+    text T = "A namespace is designed to overcome this difficulty and is used.";
+    FILE *fdic = fopen(Dictionary, "ab");
+    fwrite(&T, sizeof(T), 1, fdic);
+    fclose(fdic);*/
 
     //Greate root for Trie Tree
     Node* root = new Node;
     cur_offset = readIndex(Filename, root) + 500;
 
-    /*text T = "A namespace is designed to overcome this difficulty and is used.";
-    FILE *fdic = fopen(Dictionary, "ab");
-    fwrite(&T, sizeof(T), 1, fdic);
-    fclose(fdic);*/
 
-
-    /*int n=50;
+    // Input data for Dictionary
+    /*int n=25;
     char word[50];
     for (int i=0; i<n; ++i)
     {
+        cout<<"New word: ";
         cin>>word;
         addWord(Filename, Dictionary, root, word);
-    }*/
+        cout<<"----------------------"<<endl;
+    }
 
-    //cur_offset = readIndex(Filename, root);
+    cur_offset = readIndex(Filename, root);
 
-    //findWord(Dictionary, root, "cin");
+    findWord(Dictionary, root, "app");*/
 
     /*text T;
     FILE* fdic = fopen(Dictionary, "rb");
-    fseek(fdic, 53500, 0);
+    fseek(fdic, cur_offset -500, 0);
     fread(&T, sizeof(T), 1, fdic);
     fclose(fdic);
     cout<<T<<endl;*/
