@@ -22,7 +22,12 @@ void addNode(Node *root, char key[50], long off = -1)
             p->child[id] = new Node;
         p = p->child[id];
     }
-    p->offset = off;
+    if (p->offset == -2)
+        p->offset = 0;
+    else if (p->offset == -1)
+        p->offset = off;
+    else
+        p->offset *= -1;
 }
 
 int findNode(Node *root, char key[50])
@@ -88,34 +93,69 @@ long readIndex(char *Filename, Node* root)
 //Driver for Word on Dictionary
 void addWord(char *idFile, char *dicFile, Node *root, char word[50])
 {
+    long off = findNode(root, word);
     if (findNode(root, word) >= 0 )     // if word in Tree, return
         {
             cout<<"The word : "<<word<<" : has been in dictionary"<<endl;
             return;
         }
+    if (off == -1)
+    {
+        addNode(root, word, cur_offset);    // addNode word, cur_offset to Tree
 
-    addNode(root, word, cur_offset);    // addNode word, cur_offset to Tree
+        //Add word and offset to Index file
+        FILE *f = fopen(idFile, "ab");
+        row xx;
+        xx.offset = cur_offset;
+        strcpy(xx.key, word);
+        fwrite(&xx, sizeof(xx), 1, f);
+        fclose(f);
 
-    //Add word and offset to Index file
-    FILE *f = fopen(idFile, "ab");
-    row xx;
-    xx.offset = cur_offset;
-    strcpy(xx.key, word);
-    fwrite(&xx, sizeof(xx), 1, f);
-    fclose(f);
+         //Add word and explain text to Dictionary file
+        FILE *fdic = fopen(dicFile, "ab");
+        text S;
+        cout<<"Explain text for "<<word<<" : \n";
+        fflush(stdin);
+        gets(S);
+        //fseek(fdic, cur_offset, 0);
+        fwrite(&S, sizeof(S), 1, fdic);
+        //cout<<endl<<cur_offset<<endl<<S<<endl;
+        fclose(fdic);
 
-     //Add word and explain text to Dictionary file
-    FILE *fdic = fopen(dicFile, "ab");
-    text S;
-    cout<<"Explain text for "<<word<<" : \n";
-    fflush(stdin);
-    gets(S);
-    //fseek(fdic, cur_offset, 0);
-    fwrite(&S, sizeof(S), 1, fdic);
-    //cout<<endl<<cur_offset<<endl<<S<<endl;
-    fclose(fdic);
+        cur_offset += 500;
+    }
+    else if (off == -2)
+    {
+        addNode(root, word, cur_offset);    // addNode word, cur_offset to Tree
 
-    cur_offset += 500;
+        FILE *fdic = fopen(dicFile, "r+");
+        text S;
+        cout<<"Explain text for "<<word<<" : \n";
+        fflush(stdin);
+        gets(S);
+        fseek(fdic, 0, 0);
+        fwrite(&S, sizeof(S), 1, fdic);
+        //cout<<endl<<cur_offset<<endl<<S<<endl;
+        fclose(fdic);
+
+        cur_offset += 500;
+    }
+    else
+    {
+        addNode(root, word, cur_offset);    // addNode word, cur_offset to Tree
+
+        FILE *fdic = fopen(dicFile, "r+");
+        text S;
+        cout<<"Explain text for "<<word<<" : \n";
+        fflush(stdin);
+        gets(S);
+        fseek(fdic, -off, 0);
+        fwrite(&S, sizeof(S), 1, fdic);
+        //cout<<endl<<cur_offset<<endl<<S<<endl;
+        fclose(fdic);
+
+        cur_offset += 500;
+    }
 }
 
 void editExplain (char *dicFile, long offset)
@@ -168,7 +208,7 @@ void delWord(char *Filename, char key[50],Node* root)
     if (p->offset < 0) {cout<<"Not Found"<<endl; return;}
 
     if (p->offset == 0)
-        p->offset = -1;
+        p->offset = -2;
     else
         p->offset = (p->offset)*(-1);
 }
